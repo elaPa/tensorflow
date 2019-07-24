@@ -81,5 +81,7 @@ fi
 apt-get install -y ca-certificates-java
 update-ca-certificates -f
 
+apt-get install python-dev
+
 apt-get clean
 rm -rf /var/lib/apt/lists/*

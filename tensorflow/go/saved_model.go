@@ -19,6 +19,8 @@ package tensorflow
 import (
 	"runtime"
 	"unsafe"
+
+	pb "github.com/tensorflow/tensorflow/tensorflow/core/protos_all_go_proto"
 )
 
 // #include <stdlib.h>
@@ -26,10 +28,10 @@ import (
 import "C"
 
 // SavedModel represents the contents of loaded SavedModel.
-// TODO(jhseu): Add and document metagraphdef when we pregenerate protobufs.
 type SavedModel struct {
-	Session *Session
-	Graph   *Graph
+	Session      *Session
+	Graph        *Graph
+	MetaGraphDef *pb.MetaGraphDef
 }
 
 // LoadSavedModel creates a new SavedModel from a model previously
@@ -58,8 +60,10 @@ func LoadSavedModel(exportDir string, tags []string, options *SessionOptions) (*
 		cTags[i] = C.CString(tags[i])
 	}
 	graph := NewGraph()
-	// TODO(jhseu): Add support for run_options and meta_graph_def.
-	cSess := C.TF_LoadSessionFromSavedModel(cOpt, nil, cExportDir, (**C.char)(unsafe.Pointer(&cTags[0])), C.int(len(cTags)), graph.c, nil, status.c)
+	metaGraph := newMetaGraph()
+	defer metaGraph.done()
+	// TODO(jhseu): Add support for run_options.
+	cSess := C.TF_LoadSessionFromSavedModel(cOpt, nil, cExportDir, (**C.char)(unsafe.Pointer(&cTags[0])), C.int(len(cTags)), graph.c, metaGraph.c, status.c)
 	for i := range cTags {
 		C.free(unsafe.Pointer(cTags[i]))
 	}
@@ -68,7 +72,11 @@ func LoadSavedModel(exportDir string, tags []string, options *SessionOptions) (*
 	if err := status.Err(); err != nil {
 		return nil, err
 	}
+	mgd, err := metaGraph.decode()
+	if err != nil {
+		return nil, err
+	}
 	s := &Session{c: cSess}
 	runtime.SetFinalizer(s, func(s *Session) { s.Close() })
-	return &SavedModel{Session: s, Graph: graph}, nil
+	return &SavedModel{Session: s, Graph: graph, MetaGraphDef: mgd}, nil
 }
