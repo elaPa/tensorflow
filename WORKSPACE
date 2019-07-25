@@ -21,6 +21,22 @@ tf_repositories()
 load("@io_bazel_rules_closure//closure:defs.bzl", "closure_repositories")
 
 closure_repositories()
+#
+#load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
+#
+#git_repository(
+#    name = "com_google_protobuf",
+#    commit = "09745575a923640154bcf307fba8aedff47f240a",
+#    remote = "https://github.com/protocolbuffers/protobuf",
+#    shallow_since = "1558721209 -0700",
+#)
+#
+#load("@com_google_protobuf//:protobuf_deps.bzl", "protobuf_deps")
+#
+#protobuf_deps()
+#
+#load("@com_google_protobuf//:protobuf_deps.bzl", "go_proto_library")
+#
 
 load("//third_party/toolchains/preconfig/generate:archives.bzl",
      "bazel_toolchains_archive")
